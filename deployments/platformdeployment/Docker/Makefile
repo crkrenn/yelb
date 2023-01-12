@@ -7,20 +7,33 @@ RAW_COMPOSE_FILE = cloud_compose.yaml
 EDITED_COMPOSE_FILE = cloud_compose_new.yaml
 
 convert: ## convert docker file to cloud compose file
-	docker context use myecscontext
+	docker context use myecscontext2
 	docker compose convert > ${RAW_COMPOSE_FILE}
 
-cloud_compose: convert ## update cloud compose file with custom features
+cloud-compose: convert ## update cloud compose file with custom features
 	bin/update_cloud_compose.py ${RAW_COMPOSE_FILE} ${EDITED_COMPOSE_FILE} \
 		${BILLING_TAG} ${SERVICE_URL} ${SERVICE_NAME} ${AWS_REGION}
 
-create_stack: cloud_compose ## launch updated cloud compose file
-    aws cloudformation create-stack \
-    	--stack-name ${SERVICE_NAME}-stack \
-    	--template-body file://${EDITED_COMPOSE_FILE} \
-		--region ${AWS_REGION}
+create-stack: cloud-compose ## launch updated cloud compose file
+	aws cloudformation create-stack \
+		--stack-name ${SERVICE_NAME}-stack \
+		--template-body file://${EDITED_COMPOSE_FILE} \
+		--region ${AWS_REGION} \
+		--capabilities CAPABILITY_IAM
 
-delete_stack:  ## delete running stack
+describe-stack: ## describe stack
+	aws cloudformation list-stack-resources \
+		--stack-name ${SERVICE_NAME}-stack \
+
+stack-url: ## get URL of stack load balancer
+	@aws cloudformation describe-stack-resource \
+		--stack-name ${SERVICE_NAME}-stack \
+		--logical-resource-id LoadBalancer | \
+		jq '.StackResourceDetail.PhysicalResourceId' | \
+		xargs aws elbv2 describe-load-balancers --load-balancer-arns | \
+		jq '"http://" + (.LoadBalancers | .[0] | .DNSName)'
+
+delete-stack:  ## delete running stack
 	aws cloudformation delete-stack --stack-name ${SERVICE_NAME}-stack
 
 help:
