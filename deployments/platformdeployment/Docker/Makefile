@@ -1,10 +1,27 @@
+#!/usr/bin/env make
+include .env
+export $(shell sed 's/=.*//' .env)
+
 BILLING_TAG ?= yelb_dev
-SERVICE_URL ?= yelb.democracygps.org
+SERVICE_URL ?= yelb.example.com
 SERVICE_NAME ?= yelb
 AWS_REGION ?= us-west-2
 
+AWS_HOSTED_ZONE_ID ?= XXXXXXXXXXXXX
+AWS_ROOT_DOMAIN ?= example.com
+
 RAW_COMPOSE_FILE = cloud_compose.yaml
 EDITED_COMPOSE_FILE = cloud_compose_new.yaml
+
+import_dns:
+	-@echo "attempting to authenticate with aws dns"; \
+	cd terraform; \
+	terraform init; \
+	export TFVAR_aws_root_domain=${AWS_ROOT_DOMAIN}; \
+	terraform import aws_route53_zone.root ${AWS_HOSTED_ZONE_ID}
+
+test: import_dns
+	echo foo
 
 convert: ## convert docker file to cloud compose file
 	docker context use myecscontext2
