@@ -24,3 +24,15 @@ add variables to shell/terraform
 add load balancer to terraform
 remove load balancer from cloud formation
 add load balancer arn to cloud formation
+
+https://stackoverflow.com/questions/68952765/unable-to-attach-acm-public-certificate-with-alb-listener-using-lambda-across-ac
+
+need to use python with some waiting to apply certificate properly. 
+
+TTD:
+add url cert to makefile:
+(venv_docker_aws) (base) crkrenn@admins-MacBook-Pro-2 Docker % aws acm  request-certificate \
+--domain-name        
+[--validation-method <value>]
+
+add load balancer certificate to update_cloud_compose
