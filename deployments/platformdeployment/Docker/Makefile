@@ -39,6 +39,17 @@ DEBUG: ## Run tools in DEBUG, with more diagnostic outputs
 # 	export TF_VAR_billing_tag=${BILLING_TAG}; \
 # 	terraform plan
 
+add-ssl-cert-tf: ## create and validate ssl certificate with terraform
+	-@echo "attempting to create aws load balancer"; \
+	cd terraform_ssl; \
+	terraform init; \
+	export TF_VAR_DEBUG=${DEBUG}; \
+	export TF_VAR_service_name=${SERVICE_NAME}; \
+	export TF_VAR_hosted_zone=${AWS_HOSTED_ZONE}; \
+	export TF_VAR_hosted_zone_id=${AWS_HOSTED_ZONE_ID}; \
+
+	terraform plan
+
 dns_input:
 	@jq --null-input \
 	--arg user "${AWS_REGION}" \
