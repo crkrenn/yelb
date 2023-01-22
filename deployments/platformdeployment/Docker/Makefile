@@ -8,16 +8,19 @@
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listenercertificate.html
 #https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listener.html
 
-include .env
-export $(shell sed 's/=.*//' .env)
+DOT_ENV ?= .env
+PROD_ENV ?= prod.env
+DOCKER_ENV ?= docker_temp.env
 
-BILLING_TAG ?= yelb_dev
-SERVICE_NAME ?= yelb
+include ${DOT_ENV}
+export $(shell sed 's/=.*//' ${DOT_ENV})
+$(shell cat ${DOT_ENV} > ${DOCKER_ENV})
 
-AWS_REGION ?= us-west-2
-AWS_HOSTED_ZONE ?= example.com
-AWS_HOSTED_ZONE_ID ?= XXXXXXXXXXXXX
-# S3_BUCKET ?= XXXXXXXXXXXXX
+ifneq ("$(wildcard $(PROD_ENV))","")
+  $(shell cat ${PROD_ENV} >> ${DOCKER_ENV})
+  include ${PROD_ENV}
+  export $(shell sed 's/=.*//' ${PROD_ENV})
+endif
 
 RAW_COMPOSE_FILE = cloud_compose.yaml
 EDITED_COMPOSE_FILE = cloud_compose_new.yaml
@@ -78,8 +81,10 @@ dns_input:
 
 
 convert: ## convert docker file to cloud compose file
-	docker context use myecscontext2
-	docker compose convert > ${RAW_COMPOSE_FILE}
+	docker context use myecscontext2; \
+	docker compose \
+		--env-file ${DOCKER_ENV} \
+		convert > ${RAW_COMPOSE_FILE}
 
 cloud-compose: convert ## update cloud compose file with custom features
 	export DEBUG=${DEBUG}; \
