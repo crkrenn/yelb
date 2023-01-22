@@ -38,3 +38,13 @@ add url cert to makefile:
 add load balancer certificate to update_cloud_compose
 
 
+
+docker build -t username/image_name:tag_name .
+
+https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html
+
+docker pull aws_account_id.dkr.ecr.us-west-2.amazonaws.com/amazonlinux:latest
+
+buildx
+
+get account id
