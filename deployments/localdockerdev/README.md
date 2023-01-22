@@ -15,4 +15,4 @@ You should now be able to see the application running by connecting your browser
 
 In this local test scenario all services are exposed on their ports and they are all referenced with `localhost:<port>`. In this scenario there is no need for name resolutions and service discovery (everything is resolved as `localhost`). 
 
-Note that for the local test scenario we need to force the `RACK_ENV` variable to `test` and the `UI_ENV` variable to `test`. Their default is respectively `production` and `prod`. 
+Note that for the local test scenario we need to force the `RACK_ENV` variable to `test` and the `UI_ENV` variable to `test`. Their default is respectively `production` and `prod`. AKIAIOSFODNN7EXAMPxx
