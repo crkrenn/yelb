@@ -1,0 +1,180 @@
+BASE_ENV ?= .env
+PROD_ENV ?= prod.env
+DEV_ENV ?= dev.env
+DOCKER_ENV ?= docker_temp.env
+
+export ENV_FILE = /dev/null
+
+# all:
+# 	@echo "make PROD"
+# 	@echo "make DEV"
+
+# TTD: make PROD; make DEV
+include ${BASE_ENV}
+export $(shell sed 's/=.*//' ${BASE_ENV})
+
+PROD: ## Run in prod mode (e.g. `make PROD start`, etc.)
+	@echo Running in prod mode
+	$(eval ENV_FILE = prod.env)
+	$(eval include ${ENV_FILE})
+	$(eval export $(shell sed 's/=.*//' ${ENV_FILE}))
+
+DEV: ## Run in dev mode (e.g. `make DEV start`, etc.)
+	@echo Running in dev mode
+	$(eval ENV_FILE = dev.env)
+	$(eval include ${ENV_FILE})
+	$(eval export $(shell sed 's/=.*//' ${ENV_FILE}))
+
+export DOCKER_DETACHED=--detach
+ATTACHED: ## Run docker in "attached" mode, with output from all containers streaming to the terminal
+	$(eval undefine DOCKER_DETACHED)
+
+docker_env:
+	$(shell cat ${BASE_ENV} > ${DOCKER_ENV})
+	$(shell cat ${ENV_FILE} >> ${DOCKER_ENV})
+
+echo_vars:
+	@echo ENV_FILE=${ENV_FILE}
+
+start: docker_env echo_vars ## Start all Docker containers
+	@echo Starting
+	-docker-compose --env-file ${DOCKER_ENV} up ${DOCKER_DETACHED}
+
+stop: echo_vars ## Stop all Docker containers
+	-docker-compose --env-file ${DOCKER_ENV} down
+
+test: docker_env # test that env variables are set correctly for make and docker
+	@echo Running tests
+	cat ${DOCKER_ENV}
+	@echo env_tag: ${ENV_TAG}
+
+# ifneq ("$(wildcard $(PROD_ENV))","")
+#   $(shell cat ${PROD_ENV} >> ${DOCKER_ENV})
+#   include ${PROD_ENV}
+#   export $(shell sed 's/=.*//' ${PROD_ENV})
+# endif
+
+# run from dockerhub
+# run from local
+# build local
+
+# variables:
+# DOCKER_REPO
+# TAGS
+
+# BASEURL ?= https://127.0.0.1.sslip.io
+# E2E_RUN = cd e2e; CYPRESS_BASE_URL=$(BASEURL)
+# export ENV_FILE = .env
+# export TAG = $(shell grep -e ^TAG ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,""); print $$2}')
+# export S3_BUCKET = $(shell grep -e ^S3_BUCKET ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,""); print $$2}')
+# export GIT_HASH = $(shell git rev-parse --short HEAD)
+# export COMPOSE_FILE_ARGS = -f docker-compose.yml -f docker-compose.dev.yml
+# export COMPOSE_FILE_ARGS = -f docker-compose.yml
+# export DOCKER_DETACHED=--detach
+
+# ATTACHED: ## Run docker in "attached" mode, with output from all containers streaming to the terminal
+# 	$(eval undefine DOCKER_DETACHED)
+
+# PROD: ## Run in prod mode (e.g. `make PROD start`, etc.)
+# 	$(eval ENV_FILE = prod.env)
+# 	$(eval TAG = $(shell grep -e ^TAG ${ENV_FILE} | awk -F'[=]' '{gsub(/ /,"");print $$2}'))
+# 	$(eval COMPOSE_FILE_ARGS = -f docker-compose.yml)
+
+# echo_vars:
+# 	@echo ENV_FILE=${ENV_FILE}
+# 	@echo TAG=${TAG}
+
+# pull: echo_vars ## Pull most recent Docker container builds (nightlies)
+# 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} pull
+
+# start: echo_vars ## Start all Docker containers
+# 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}
+
+# stop: echo_vars ## Stop all Docker containers
+# 	-docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
+
+# rm-containers: echo_vars ## Remove Docker containers where (polis_tag="${TAG}")
+# 	@echo 'removing filtered containers (polis_tag="${TAG}")'
+# 	@-docker rm -f $(shell docker ps -aq --filter "label=polis_tag=${TAG}")
+
+# rm-volumes: echo_vars ## Remove Docker volumes where (polis_tag="${TAG}")
+# 	@echo 'removing filtered volumes (polis_tag="${TAG}")'
+# 	@-docker volume rm -f $(shell docker volume ls -q --filter "label=polis_tag=${TAG}")
+
+# rm-images: echo_vars ## Remove Docker images where (polis_tag="${TAG}")
+# 	@echo 'removing filtered images (polis_tag="${TAG}")'
+# 	@-docker rmi -f $(shell docker images -q --filter "label=polis_tag=${TAG}")
+
+# rm-ALL: rm-containers rm-volumes rm-images ## Remove Docker containers, volumes, and images where (polis_tag="${TAG}")
+# 	@echo Done.
+
+# rm-ALL-ALL-TAGS: ## Remove EVERY Docker container, volume, and image on this machine
+# 	-docker rm -f $(shell docker ps -aq)
+# 	-docker rmi -f $(shell docker images -q)
+# 	-docker volume rm $(shell docker volume ls -q)
+
+# hash: ## Show current short hash
+# 	@echo Git hash: ${GIT_HASH}
+
+# start-rebuild: echo_vars ## Start all Docker containers, [re]building as needed
+# 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
+
+# start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker containers, volumes, and images where (polis_tag="${TAG}")
+# 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache
+# 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
+# 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
+# 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
+# 	docker-compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
+
+# extract-bundles: ## Extract bundles from file-server for cloud deployment
+# 	/bin/rm -rf build
+# 	docker cp polis-${TAG}-file-server-1:/app/build/ build
+
+# upload-bundles: ## upload bundles to aws s3
+# 	aws s3 cp build s3://${S3_BUCKET} \
+# 	--recursive \
+# 	--metadata-directive REPLACE \
+# 	--acl public-read \
+# 	--cache-control max-age=31536000
+
+# e2e-install: e2e/node_modules ## Install Cypress E2E testing tools
+# 	$(E2E_RUN) npm install
+
+# e2e-prepare: ## Prepare to run Cypress E2E tests
+# 	@# Testing embeds requires a override of a file prior to build.
+# 	cp e2e/cypress/fixtures/html/embed.html client-admin/embed.html
+
+# e2e-run-minimal: ## Run E2E tests: minimal (smoke test)
+# 	$(E2E_RUN) npm run e2e:minimal
+
+# e2e-run-standalone: ## Run E2E tests: standalone (no credentials required)
+# 	$(E2E_RUN) npm run e2e:standalone
+
+# e2e-run-secret: ## Run E2E tests: secret (credentials required)
+# 	$(E2E_RUN) npm run e2e:secret
+
+# e2e-run-subset: ## Run E2E tests: filter tests by TEST_FILTER envvar (without browser exit)
+# 	$(E2E_RUN) npm run e2e:subset
+
+# e2e-run-all: ## Run E2E tests: all
+# 	$(E2E_RUN) npm run e2e:all
+
+
+# # Helpful CLI shortcuts
+# rbs: start-rebuild
+
+# %:
+# 	@true
+
+# .PHONY: help pull start stop rm-containers rm-volumes rm-images rm-ALL hash start-rebuild restart-FULL-REBUILD \
+# 	rm-ALL-ALL-TAGS e2e-install e2e-prepare e2e-run-minimal e2e-run-standalone e2e-run-secret e2e-run-subset e2e-run-all
+
+help:
+	@echo 'Usage: make <command>'
+	@echo
+	@echo 'where <command> is one of the following:'
+	@echo
+	@grep -E '^[a-z0-9A-Z_-]+:.*?## .*$$' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo
+	@echo 'Note: some targets (e.g. ATTACHED) require GNU Make version 3.82 or above.'
+.DEFAULT_GOAL := help

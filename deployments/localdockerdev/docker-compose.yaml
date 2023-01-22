@@ -1,0 +1,31 @@
+#use this with `docker-compose up` against a generic Docker end-point (e.g. standalone Docker)
+version: "2.1"
+services:
+  yelb-ui:
+    image: ${DOCKER_REPO}/yelb-ui:${YELB_UI_TAG}
+    depends_on:
+      - yelb-appserver
+    ports:
+      - 8080:80
+    environment:
+      - UI_ENV=test # dev | test | prod
+
+  yelb-appserver:
+    image: ${DOCKER_REPO}/yelb-appserver:${YELB_APPSERVER_TAG}
+    depends_on:
+      - redis-server
+      - yelb-db
+    ports:
+      - 4567:4567
+    environment:
+      - RACK_ENV=test # development | test | production
+
+  redis-server:
+    image: redis:${REDIS_TAG}
+    ports:
+      - 6379:6379
+
+  yelb-db:
+    image: ${DOCKER_REPO}/yelb-db:${YELB_DB_TAG}
+    ports:
+      - 5432:5432
