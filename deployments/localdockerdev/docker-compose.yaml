@@ -3,6 +3,9 @@ version: "2.1"
 services:
   yelb-ui:
     image: ${DOCKER_REPO}/yelb-ui:${YELB_UI_TAG}
+    build:
+      context: ../../yelb-ui
+      dockerfile: Dockerfile
     depends_on:
       - yelb-appserver
     ports:
@@ -12,20 +15,38 @@ services:
 
   yelb-appserver:
     image: ${DOCKER_REPO}/yelb-appserver:${YELB_APPSERVER_TAG}
+    build:
+      context: ../../yelb-appserver
+      dockerfile: Dockerfile
     depends_on:
-      - redis-server
+      - yelb-redis-server
       - yelb-db
     ports:
       - 4567:4567
     environment:
       - RACK_ENV=test # development | test | production
 
-  redis-server:
+  yelb-redis-server:
     image: redis:${REDIS_TAG}
     ports:
       - 6379:6379
+    # uncomment the following lines if you want to persist redis data across deployments
+    # volumes:
+    #   - yelb-redisdata:/data
 
   yelb-db:
     image: ${DOCKER_REPO}/yelb-db:${YELB_DB_TAG}
     ports:
       - 5432:5432
+    # uncomment the following lines if you want to persist postgres data across deployments
+    #volumes:
+    #  - yelb-postgresqldata:/var/lib/postgresql/data
+
+# uncomment the following lines if you want to persist redis/postgres data across deployments
+# volumes:
+#   yelb-redisdata:
+#      name: yelb-redisdata
+#      driver: local # you can pick another driver depending on the platform you are deploying onto
+#   yelb-postgresqldata:
+#      name: yelb-postgresqldata
+#      driver: local # you can pick another driver depending on the platform you are deploying onto

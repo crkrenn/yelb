@@ -8,7 +8,7 @@ services:
     ports:
       - 8080:80
     environment:
-      - UI_ENV=test # dev | test | prod 
+      - UI_ENV=test # dev | test | prod
 
   yelb-appserver:
     image: mreferre/yelb-appserver:0.7
@@ -18,7 +18,7 @@ services:
     ports:
       - 4567:4567
     environment:
-      - RACK_ENV=test # development | test | production 
+      - RACK_ENV=test # development | test | production
 
   redis-server:
     image: redis:4.0.2
@@ -29,3 +29,11 @@ services:
     image: mreferre/yelb-db:0.6
     ports:
       - 5432:5432
+
+volumes:
+  yelb-redisdata:
+     name: yelb-redisdata
+     driver: local # you can pick another driver depending on the platform you are deploying onto
+  yelb-postgresqldata:
+     name: yelb-postgresqldata
+     driver: local # you can pick another driver depending on the platform you are deploying onto

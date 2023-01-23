@@ -3,3 +3,6 @@ cloud_compose_new.yaml
 prod.env
 .env
 temp.json
+docker_temp.env
+venv*
+__pycache__
