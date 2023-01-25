@@ -36,6 +36,9 @@ services:
 
   yelb-db:
     image: ${DOCKER_REPO}/yelb-db:${YELB_DB_TAG}
+    build:
+      context: ../../yelb-appserver
+      dockerfile: Dockerfile
     ports:
       - 5432:5432
     # uncomment the following lines if you want to persist postgres data across deployments

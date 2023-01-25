@@ -5,11 +5,6 @@ DOCKER_ENV ?= docker_temp.env
 
 export ENV_FILE = /dev/null
 
-# all:
-# 	@echo "make PROD"
-# 	@echo "make DEV"
-
-# TTD: make PROD; make DEV
 include ${BASE_ENV}
 export $(shell sed 's/=.*//' ${BASE_ENV})
 
@@ -42,6 +37,20 @@ start: docker_env echo_vars ## Start all Docker containers
 start-rebuild: echo_vars ## Start all Docker containers, [re]building as needed
 	docker-compose --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
 
+start-FULL-REBUILD: echo_vars stop rm-ALL ## "make stop rm-ALL", rebuild (without cache) & restart
+	docker-compose --env-file ${ENV_FILE} build --no-cache
+	docker-compose --env-file ${ENV_FILE} down
+	docker-compose --env-file ${ENV_FILE} up ${DOCKER_DETACHED}  --build
+
+build: echo_vars ## build images
+	docker-compose --env-file ${ENV_FILE} build
+
+push: echo_vars build ## push images
+	docker-compose --env-file ${ENV_FILE} push
+
+# DOCKER_REPO=714774317425.dkr.ecr.us-west-2.amazonaws.com
+
+
 stop: echo_vars ## Stop all Docker containers
 	-docker-compose --env-file ${DOCKER_ENV} down
 
@@ -65,11 +74,11 @@ rm-ALL-ALL-TAGS: ## Remove EVERY Docker container, volume, and image on this mac
 	-docker rmi -f $(shell docker images -q)
 	-docker volume rm $(shell docker volume ls -q)
 
-modify-code:
+modify-code: ## Modify source code
 	cp testing/modified_code/app.component.html \
 		../../yelb-ui/clarity-seed-newfiles/src/app
 
-revert-code:
+revert-code: ## Revert source code to original_code
 	cp testing/original_code/app.component.html \
 		../../yelb-ui/clarity-seed-newfiles/src/app
 
